@@ -51,9 +51,21 @@ void setup() {
   dht.begin();
 }
 
-void loop() {
+unsigned long previousMillis = 0;  
 
-  float h = dht.readHumidity();
+const long interval = 3000;   
+
+void loop() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    sensorRead();
+  }
+}
+
+void sensorRead(){
+   float h = dht.readHumidity();
   // Read temperature as Celsius (the default)
   float t = dht.readTemperature();
   // Compute heat index in Celsius (isFahreheit = false)
@@ -73,6 +85,10 @@ void loop() {
     Serial.print(F("°C \n"));
   }
 
+  BTSerial.println("H:" + String(h,2));
+  BTSerial.println("T:" + String(t,2));
+  BTSerial.println("HI:" + String(hic, 2));
+
   float COLevel = 0;
 
   for (int i = 0; i <= 100; i++)
@@ -91,21 +107,15 @@ void loop() {
   Serial.print(COLevel_ppm);
   Serial.println(" PPM");
 
+  BTSerial.println("C:" + String(COLevel_ppm));
+
   float GasLevel_ppm = mq135_getPPM(t, h, MQ_135_PIN);
 
   Serial.print("Gas Level : ");
   Serial.print(GasLevel_ppm);
   Serial.println(" PPM");
 
-  String str = "H:" + String(h,2) + ";T:" + String(t,2) + ";HI:" + String(hic, 2) + ";C:" + String(COLevel_ppm) + ";G:" + String(GasLevel_ppm, 2) + "\n";
-
-  char charArray[50];
-
-  str.toCharArray(charArray, 50);
-  BTSerial.write(charArray);
-  Serial.print(charArray);
-
-  delay(READ_DELAY * 1000);
+  BTSerial.println("G:" + String(GasLevel_ppm, 2));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
